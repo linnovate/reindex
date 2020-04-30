@@ -28,7 +28,7 @@ services:
             - "${ELASTICSEARCH_PORT}:9200"
             - "${ELASTICSEARCH_DISCOVERY_PORT}:9300"
         volumes:
-            - "esdata:/usr/share/elasticsearch/data:ro"
+            - "esdata:/usr/share/elasticsearch/data"
 
     kibana:
         container_name: "${REINDEX_PROJECT_NAME}_kibana"
