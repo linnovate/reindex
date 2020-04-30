@@ -1,0 +1,6 @@
+[submodule "core"]
+	path = core
+	url = git@github.com:linnovate/reindex-core.git
+[submodule "contrib"]
+	path = contrib
+	url = git@github.com:linnovate/reindex-contrib.git
