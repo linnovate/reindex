@@ -12,7 +12,7 @@
 ## How to download and start
 ```
 
-git clone https://github.com/linnovate/reindex
+git clone git@github.com:linnovate/reindex.git
 cd reindex
 git submodule update --init --force --recursive --checkout
 npm install?
