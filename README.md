@@ -1,8 +1,10 @@
 # reindex
+Reindex is our take on how to balance out various technologies we like building ambitious web projects.
+reindex integrates react ,graphql ,node.js , mongo, redis, elasticsearch and cms's like wordpress and drupal.
 
-# Reindex Project Integration
+# reindex subsystems
 - Generic Reindex (Core)
-- Api Modules (Plugins & Themes)
+- Contrib Modules (Plugins & Themes)
 - Wordpress
 - React
 - sqldump.sql (Local Environment SQL)
