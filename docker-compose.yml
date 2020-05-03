@@ -25,6 +25,54 @@ services:
         start_period: 40s
       command: npm run start:dev
 
+    consumer:
+      container_name: "${REINDEX_PROJECT_NAME}_consumer"
+      build:
+        context: ./core/consumer
+        target: $BUILDSTAGE
+      environment:
+        PORT: $CONSUMER_PORT
+        DEBUG_PORT: $CONSUMER_DEBUG_PORT
+        SERVICE_NAME: $CONSUMER_SERVICE_NAME
+        NODE_ENV: $NODE_ENV
+      ports:
+        - "${CONSUMER_PORT}:${CONSUMER_PORT}"
+        - "${CONSUMER_DEBUG_PORT}:${CONSUMER_DEBUG_PORT}"
+      volumes:
+        - "/usr/src/app/node_modules"
+        - "./core/consumer:/usr/src/app"
+      healthcheck:
+        test: ["CMD","curl", "-f", "http://localhost:${CONSUMER_PORT}/api/status/health"]
+        interval: 2m
+        timeout: 10s
+        retries: 3
+        start_period: 40s
+      command: npm run start:dev
+
+    controller:
+      container_name: "${REINDEX_PROJECT_NAME}_controller"
+      build:
+        context: ./core/controller
+        target: $BUILDSTAGE
+      environment:
+        PORT: $CONTROLLER_PORT
+        DEBUG_PORT: $CONTROLLER_DEBUG_PORT
+        SERVICE_NAME: $CONTROLLER_SERVICE_NAME
+        NODE_ENV: $NODE_ENV
+      ports:
+        - "${CONTROLLER_PORT}:${CONTROLLER_PORT}"
+        - "${CONTROLLER_DEBUG_PORT}:${CONTROLLER_DEBUG_PORT}"
+      volumes:
+        - "/usr/src/app/node_modules"
+        - "./core/controller:/usr/src/app"
+      healthcheck:
+        test: ["CMD","curl", "-f", "http://localhost:${CONTROLLER_PORT}/api/status/health"]
+        interval: 2m
+        timeout: 10s
+        retries: 3
+        start_period: 40s
+      command: npm run start:dev
+
     nginx:
         container_name: "${REINDEX_PROJECT_NAME}_nginx"
         image: nginx:$NGINX_IMAGE_VERSION
