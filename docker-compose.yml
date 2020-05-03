@@ -1,6 +1,30 @@
 version: "3.7"
 
 services:
+    graph:
+      container_name: "${REINDEX_PROJECT_NAME}_graph"
+      build:
+        context: ./core/graph
+        target: $BUILDSTAGE
+      environment:
+        PORT: $GRAPH_PORT
+        DEBUG_PORT: $GRAPH_DEBUG_PORT
+        SERVICE_NAME: $GRAPH_SERVICE_NAME
+        NODE_ENV: $NODE_ENV
+      ports:
+        - "${GRAPH_PORT}:${GRAPH_PORT}"
+        - "${GRAPH_DEBUG_PORT}:${GRAPH_DEBUG_PORT}"
+      volumes:
+        - "/usr/src/app/node_modules"
+        - "./core/graph:/usr/src/app"
+      healthcheck:
+        test: ["CMD","curl", "-f", "http://localhost:${GRAPH_PORT}/api/status/health"]
+        interval: 2m
+        timeout: 10s
+        retries: 3
+        start_period: 40s
+      command: npm run start:dev
+
     nginx:
         container_name: "${REINDEX_PROJECT_NAME}_nginx"
         image: nginx:$NGINX_IMAGE_VERSION
