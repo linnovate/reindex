@@ -1,6 +1,21 @@
 version: "3.7"
 
 services:
+    #nginx:
+        #container_name: "${REINDEX_PROJECT_NAME}_nginx"
+        #image: nginx:$NGINX_IMAGE_VERSION
+        #volumes:
+            #- "./custom/nginx/${NGINX_DEFAULT_CONF_FILENAME}:/etc/nginx/conf.d/${NGINX_DEFAULT_CONF_FILENAME}.template"
+            #- "./custom/nginx/${NGINX_MAIN_CONF_FILENAME}:/etc/nginx/${NGINX_MAIN_CONF_FILENAME}.template"
+        #ports:
+            #- "${NGINX_PORT}:${NGINX_PORT}"
+        #environment:
+            #NGINX_PORT: $NGINX_PORT
+        #command: /bin/bash -c "envsubst < /etc/nginx/conf.d/${NGINX_DEFAULT_CONF_FILENAME}.template > /etc/nginx/conf.d/${NGINX_DEFAULT_CONF_FILENAME} && envsubst < /etc/nginx/${NGINX_MAIN_CONF_FILENAME}.template > /etc/nginx/nginx.conf && exec nginx-debug -g 'daemon off;'"
+
+#
+# Graph And Elastic Indexing stack
+#
     graph:
       container_name: "${REINDEX_PROJECT_NAME}_graph"
       build:
@@ -25,6 +40,43 @@ services:
         start_period: 40s
       command: npm run start:dev
 
+    #elasticsearch:
+        #container_name: "${REINDEX_PROJECT_NAME}_elasticsearch"
+        #image: docker.elastic.co/elasticsearch/elasticsearch:$ELASTICSEARCH_IMAGE_VERSION
+        #environment:
+            #- "cluster.name=${ELASTICSEARCH_CLUSTER_NAME}"
+            #- "bootstrap.memory_lock=${ELASTICSEARCH_MEMORY_LOCK}"
+            #- "ES_JAVA_OPTS=-Xms${ELASTICSEARCH_MIN_HEAP_SIZE} -Xmx${ELASTICSEARCH_MAX_HEAP_SIZE}"
+        #ulimits:
+            #memlock:
+                #soft: -1
+                #hard: -1
+        #ports:
+            #- "${ELASTICSEARCH_PORT}:9200"
+            #- "${ELASTICSEARCH_DISCOVERY_PORT}:9300"
+        #volumes:
+            #- "esdata:/usr/share/elasticsearch/data"
+
+    #kibana:
+        #container_name: "${REINDEX_PROJECT_NAME}_kibana"
+        #image: docker.elastic.co/kibana/kibana:$KIBANA_IMAGE_VERSION
+        #ports:
+            #- "${KIBANA_PORT}:5601"
+        #environment:
+            #ELASTICSEARCH_HOSTS: "elasticsearch:9200"
+
+    #elastichq:
+        #container_name: "${REINDEX_PROJECT_NAME}_elastichq"
+        #image: elastichq/elasticsearch-hq:$ELASTICHQ_IMAGE_VERSION
+        #ports:
+            #- "${ELASTICHQ_PORT}:5000"
+        #environment:
+            #HQ_DEFAULT_URL: "http://localhost:${ELASTICSEARCH_PORT}"
+
+#
+# Consumers and Rabbit
+#
+
     consumer:
       container_name: "${REINDEX_PROJECT_NAME}_consumer"
       build:
@@ -35,6 +87,7 @@ services:
         DEBUG_PORT: $CONSUMER_DEBUG_PORT
         SERVICE_NAME: $CONSUMER_SERVICE_NAME
         NODE_ENV: $NODE_ENV
+        RABBIT_URI: $RABBIT_URI
       ports:
         - "${CONSUMER_PORT}:${CONSUMER_PORT}"
         - "${CONSUMER_DEBUG_PORT}:${CONSUMER_DEBUG_PORT}"
@@ -49,6 +102,19 @@ services:
         start_period: 40s
       command: npm run start:dev
 
+    rabbit:
+      container_name: "${REINDEX_PROJECT_NAME}_rabbit"
+      image: rabbitmq:$RABBITMQ_IMAGE_VERSION
+      ports:
+        - "${RABBITMQ_AMQP_PORT}:${RABBITMQ_AMQP_PORT}"
+        - "${RABBITMQ_MANAGEMENT_PORT}:${RABBITMQ_MANAGEMENT_PORT}"
+      environment: 
+        RABBITMQ_DEFAULT_USER: $RABBITMQ_DEFAULT_USER
+        RABBITMQ_DEFAULT_PASS: $RABBITMQ_DEFAULT_PASS
+
+#
+# Controllers and Mongo
+#
     controller:
       container_name: "${REINDEX_PROJECT_NAME}_controller"
       build:
@@ -73,72 +139,39 @@ services:
         start_period: 40s
       command: npm run start:dev
 
-    nginx:
-        container_name: "${REINDEX_PROJECT_NAME}_nginx"
-        image: nginx:$NGINX_IMAGE_VERSION
-        volumes:
-            - "./custom/nginx/${NGINX_DEFAULT_CONF_FILENAME}:/etc/nginx/conf.d/${NGINX_DEFAULT_CONF_FILENAME}.template"
-            - "./custom/nginx/${NGINX_MAIN_CONF_FILENAME}:/etc/nginx/${NGINX_MAIN_CONF_FILENAME}.template"
-        ports:
-            - "${NGINX_PORT}:${NGINX_PORT}"
-        environment:
-            NGINX_PORT: $NGINX_PORT
-        command: /bin/bash -c "envsubst < /etc/nginx/conf.d/${NGINX_DEFAULT_CONF_FILENAME}.template > /etc/nginx/conf.d/${NGINX_DEFAULT_CONF_FILENAME} && envsubst < /etc/nginx/${NGINX_MAIN_CONF_FILENAME}.template > /etc/nginx/nginx.conf && exec nginx-debug -g 'daemon off;'"
+    mongo:
+      container_name: "${REINDEX_PROJECT_NAME}_mongo"
+      image: mongo:$MONGO_IMAGE_VERSION
+      ports:
+        - "${MONGO_DB_PORT}:${MONGO_DB_PORT}"
+      volumes:
+        - "./data/mongo:/data/db"
 
-    elasticsearch:
-        container_name: "${REINDEX_PROJECT_NAME}_elasticsearch"
-        image: docker.elastic.co/elasticsearch/elasticsearch:$ELASTICSEARCH_IMAGE_VERSION
-        environment:
-            - "cluster.name=${ELASTICSEARCH_CLUSTER_NAME}"
-            - "bootstrap.memory_lock=${ELASTICSEARCH_MEMORY_LOCK}"
-            - "ES_JAVA_OPTS=-Xms${ELASTICSEARCH_MIN_HEAP_SIZE} -Xmx${ELASTICSEARCH_MAX_HEAP_SIZE}"
-        ulimits:
-            memlock:
-                soft: -1
-                hard: -1
-        ports:
-            - "${ELASTICSEARCH_PORT}:9200"
-            - "${ELASTICSEARCH_DISCOVERY_PORT}:9300"
-        volumes:
-            - "esdata:/usr/share/elasticsearch/data"
+#
+# Frontend Stack
+#
 
-    kibana:
-        container_name: "${REINDEX_PROJECT_NAME}_kibana"
-        image: docker.elastic.co/kibana/kibana:$KIBANA_IMAGE_VERSION
-        ports:
-            - "${KIBANA_PORT}:5601"
-        environment:
-            ELASTICSEARCH_HOSTS: "elasticsearch:9200"
+    #wordpress:
+        #container_name: "${REINDEX_PROJECT_NAME}_wp"
+        #image: wordpress:$WORDPRESS_IMAGE_VERSION
+        #depends_on:
+            #- mysql
+        #environment:
+            #WORDPRESS_DB_HOST: $WORDPRESS_DB_HOST
+            #WORDPRESS_DB_USER: $WORDPRESS_DB_USER
+            #WORDPRESS_DB_PASSWORD: $WORDPRESS_DB_PASSWORD
+            #WORDPRESS_DB_NAME: $WORDPRESS_DB_NAME
 
-    elastichq:
-        container_name: "${REINDEX_PROJECT_NAME}_elastichq"
-        image: elastichq/elasticsearch-hq:$ELASTICHQ_IMAGE_VERSION
-        ports:
-            - "${ELASTICHQ_PORT}:5000"
-        environment:
-            HQ_DEFAULT_URL: "http://localhost:${ELASTICSEARCH_PORT}"
-
-    wordpress:
-        container_name: "${REINDEX_PROJECT_NAME}_wp"
-        image: wordpress:$WORDPRESS_IMAGE_VERSION
-        depends_on:
-            - mysql
-        environment:
-            WORDPRESS_DB_HOST: $WORDPRESS_DB_HOST
-            WORDPRESS_DB_USER: $WORDPRESS_DB_USER
-            WORDPRESS_DB_PASSWORD: $WORDPRESS_DB_PASSWORD
-            WORDPRESS_DB_NAME: $WORDPRESS_DB_NAME
-
-    mysql:
-        container_name: "${REINDEX_PROJECT_NAME}_mysql"
-        image: mysql:$MYSQL_IMAGE_VERSION
-        volumes:
-            - "./data/mysql:/var/lib/mysql"
-        environment:
-            MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
-            MYSQL_DATABASE: $WORDPRESS_DB_NAME
-            MYSQL_USER: $WORDPRESS_DB_USER
-            MYSQL_PASSWORD: $WORDPRESS_DB_PASSWORD
+    #mysql:
+        #container_name: "${REINDEX_PROJECT_NAME}_mysql"
+        #image: mysql:$MYSQL_IMAGE_VERSION
+        #volumes:
+            #- "./data/mysql:/var/lib/mysql"
+        #environment:
+            #MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+            #MYSQL_DATABASE: $WORDPRESS_DB_NAME
+            #MYSQL_USER: $WORDPRESS_DB_USER
+            #MYSQL_PASSWORD: $WORDPRESS_DB_PASSWORD
 
 
 volumes:
